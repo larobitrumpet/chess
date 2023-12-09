@@ -13,12 +13,12 @@ endif
 
 all: $(program)
 
-objs := main.o render.o board.o move.o vector.o
+objs := src/main.o src/render.o src/board.o src/move.o src/vector.o
 
 deps := $(patsubst %.o,%.d,$(objs))
 -include $(deps)
 
-chess: $(objs)
+$(program): $(objs)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c
