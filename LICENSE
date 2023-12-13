@@ -21,6 +21,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 
+The graphics (chess.xcf and chess.png) are (c) 2023 Lucy Robillard and lijght
+and are licensed under CC BY 4.0. To view a copy of this license, visit
+http://creativecommons.org/licenses/by/4.0/
+
+--------------------------------------------------------------------------------
+
 This software uses the [Allegro](https://liballeg.org/) game programming library
 under the following terms.
 
@@ -44,3 +50,4 @@ freely, subject to the following restrictions:
 
     3. This notice may not be removed or altered from any source
     distribution.
+
