@@ -1,3 +1,7 @@
 chess
+chess.exe
+chess-x11-x86_64.tar.gz
+chess-windows-x86_64.zip
 *.o
 *.d
+*.c.obj

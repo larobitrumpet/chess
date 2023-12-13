@@ -5,8 +5,8 @@
 #include <stdio.h>
 #endif
 #include <stdbool.h>
-#include <allegro5/allegro5.h>
-#include <allegro5/allegro_native_dialog.h>
+#include "allegro5/allegro5.h"
+#include "allegro5/allegro_native_dialog.h"
 #include "vector.h"
 #include "board.h"
 
