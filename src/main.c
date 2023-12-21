@@ -126,8 +126,6 @@ void draw(BOARD board, VECTOR* poss_moves, VECTOR* castling_moves, COLOR turn, b
     disp_post_draw();
 }
 
-COLOR turn;
-
 int main() {
     ALLEGRO_TIMER *timer;
     ALLEGRO_EVENT_QUEUE *queue;
@@ -165,7 +163,7 @@ int main() {
     // setup_scene();
     BOARD board = create_board();
     sprites_init();
-    turn = white;
+    COLOR turn = white;
     VECTOR poss_moves = construct_vector(sizeof(MOVE));
     VECTOR castling_moves = construct_vector(sizeof(CASTLING));
     bool castling[2];
