@@ -138,8 +138,8 @@ char* move_to_algebraic_notation(BOARD board, int index, MOVE move, PIECE promot
     move_piece(&b, index, move, NULL, &_);
     if (promote_to != pawn)
         b.promotion[index] = promote_to;
-    bool in_check = king_in_check(b, color);
-    bool checkmate = in_check && !can_move(b, color);
+    bool in_check = king_in_check(b, color == white ? black : white);
+    bool checkmate = in_check && !can_move(b, color == white ? black : white);
     if (checkmate) {
         notation[i] = '#';
         i++;
