@@ -161,6 +161,7 @@ int main() {
     al_register_event_source(queue, al_get_timer_event_source(timer));
 
     // setup_scene();
+    bool take_mouse_input = true;
     BOARD board = create_board();
     sprites_init();
     COLOR turn = white;
@@ -200,7 +201,7 @@ int main() {
                 mouse_pos_y = event.mouse.y;
                 break;
             case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-                if (event.mouse.button & 1) {
+                if (take_mouse_input && event.mouse.button & 1) {
                     SQUARE square;
                     square.file = (mouse_pos_x - DISP_W_OFFSET) / (DISP_W / 8) + 1;
                     square.rank = 9 - ((mouse_pos_y - DISP_H_OFFSET) / (DISP_H / 8));
@@ -224,7 +225,21 @@ int main() {
                         checkmate[turn] = in_check[turn] && !can_move(board, turn);
                         turn = turn == white ? black : white;
                         in_check[turn] = king_in_check(board, turn);
-                        checkmate[turn] = in_check[turn] && !can_move(board, turn);
+                        bool cm = can_move(board, turn);
+                        checkmate[turn] = in_check[turn] && !cm;
+                        bool stalemate = !in_check[turn] && !cm;
+                        take_mouse_input = !(checkmate[white] || checkmate[black] || stalemate);
+                        if (checkmate[white]) {
+                            printf("0-1\n");
+                        }
+                        if (checkmate[black]) {
+                            printf("\n1-0\n");
+                        }
+                        if (stalemate) {
+                            if (turn == black)
+                                printf("\n");
+                            printf("½-½\n");
+                        }
                         deconstruct_vector(poss_moves);
                         deconstruct_vector(castling_moves);
                         castling[queenside] = false;
