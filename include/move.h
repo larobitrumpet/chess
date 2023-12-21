@@ -29,7 +29,7 @@ bool square_is_move(void* square, void* move);
 #ifdef DEBUG
 bool print_move(void* move, void* _);
 #endif
-void move_piece(BOARD* board, int index, MOVE move, ALLEGRO_DISPLAY* display);
+void move_piece(BOARD* board, int index, MOVE move, ALLEGRO_DISPLAY* display, PIECE* promoted_to);
 void castle(BOARD* board, COLOR color, CASTLING_SIDE side);
 bool check_for_checks(void* move, void* is_check);
 bool king_in_check(BOARD board, COLOR king_color);

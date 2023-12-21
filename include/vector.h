@@ -27,7 +27,7 @@ int vector_index(VECTOR* vector, void* data, bool (*equal)(void*, void*));
 int vector_local_index_to_global_index(VECTOR* vector, int index);
 void vector_get(VECTOR* vector, int index, void* data);
 void vector_iterate(VECTOR* vector, bool (*func)(void*, void*), void* params);
-//bool vector_filter_func(void* data, void* params) {
-//VECTOR vector_filter(VECTOR* vector, bool (*filter_func)(void*, void*), void* params) {
+bool vector_filter_func(void* data, void* params);
+VECTOR vector_filter(VECTOR* vector, bool (*filter_func)(void*, void*), void* params);
 
 #endif

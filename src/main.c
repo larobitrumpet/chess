@@ -6,6 +6,7 @@
 #include "board.h"
 #include "render.h"
 #include "move.h"
+#include "algebraic_notation.h"
 #include "vector.h"
 
 void must_init(bool test, const char *description) {
@@ -209,7 +210,18 @@ int main() {
                     if (move_index != -1) {
                         MOVE move;
                         vector_get(&poss_moves, move_index, &move);
-                        move_piece(&board, selected_piece_index, move, disp);
+                        BOARD b = clone_board(board);
+                        PIECE promoted_to;
+                        move_piece(&board, selected_piece_index, move, disp, &promoted_to);
+                        char* notation = move_to_algebraic_notation(b, selected_piece_index, move, promoted_to);
+                        printf("%s", notation);
+                        free(notation);
+                        if (turn == white) {
+                            printf(" ");
+                            fflush(stdout);
+                        } else {
+                            printf("\n");
+                        }
                         in_check[turn] = king_in_check(board, turn);
                         checkmate[turn] = in_check[turn] && !can_move(board, turn);
                         turn = turn == white ? black : white;
@@ -223,6 +235,13 @@ int main() {
                         castling_moves = construct_vector(sizeof(CASTLING));
                     } else if (castling[queenside] && square.file == a && square.rank == (turn == white ? 1 : 8)) {
                         castle(&board, turn, queenside);
+                        printf("%s", castling_to_algebraic_notation(queenside));
+                        if (turn == white) {
+                            printf(" ");
+                            fflush(stdout);
+                        } else {
+                            printf("\n");
+                        }
                         turn = turn == white ? black : white;
                         deconstruct_vector(poss_moves);
                         deconstruct_vector(castling_moves);
@@ -232,6 +251,13 @@ int main() {
                         castling_moves = construct_vector(sizeof(CASTLING));
                     } else if (castling[kingside] && square.file == h && square.rank == (turn == white ? 1 : 8)) {
                         castle(&board, turn, kingside);
+                        printf("%s", castling_to_algebraic_notation(kingside));
+                        if (turn == white) {
+                            printf(" ");
+                            fflush(stdout);
+                        } else {
+                            printf("\n");
+                        }
                         turn = turn == white ? black : white;
                         deconstruct_vector(poss_moves);
                         deconstruct_vector(castling_moves);

@@ -20,6 +20,8 @@ typedef struct BOARD {
     PIECE promotion[32];
 } BOARD;
 
+char print_file(COL file);
+char print_rank(unsigned char rank);
 SQUARE create_square(COL file, unsigned char rank);
 bool squares_equal(SQUARE a, SQUARE b);
 BOARD create_board();

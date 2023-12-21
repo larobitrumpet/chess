@@ -24,7 +24,8 @@ bool print_move(void* move, void* _) {
 }
 #endif
 
-void move_piece(BOARD* board, int index, MOVE move, ALLEGRO_DISPLAY* display) {
+void move_piece(BOARD* board, int index, MOVE move, ALLEGRO_DISPLAY* display, PIECE* promoted_to) {
+    *promoted_to = pawn;
     SQUARE old_square = board->board[index];
     if (move.capture) {
         int i;
@@ -64,6 +65,7 @@ void move_piece(BOARD* board, int index, MOVE move, ALLEGRO_DISPLAY* display) {
             "Rook|Knight|Bishop|Queen",
             ALLEGRO_MESSAGEBOX_QUESTION
         );
+        *promoted_to = board->promotion[index];
     }
 }
 
@@ -111,7 +113,8 @@ bool king_in_check(BOARD board, COLOR king_color) {
 void possible_moves_square_enqueue(BOARD board, int index, MOVE move, COLOR piece_color, bool should_check_for_checks, VECTOR* vector) {
     if (should_check_for_checks) {
         BOARD new_board = clone_board(board);
-        move_piece(&new_board, index, move, NULL);
+        PIECE _;
+        move_piece(&new_board, index, move, NULL, &_);
         if (!king_in_check(new_board, piece_color))
             vector_enqueue(vector, &move);
     } else {
@@ -325,6 +328,7 @@ bool castling_queenside(BOARD board, COLOR color) {
     if (board.movement_state[color == white ? 8 : 24] != has_not_moved)
         return false;
     SQUARE square;
+    PIECE _;
     square.file = b;
     square.rank = color == white ? 1 : 8;
     if (square_has_piece(board, square))
@@ -337,13 +341,13 @@ bool castling_queenside(BOARD board, COLOR color) {
         return false;
     MOVE move = create_move(square, false, false, false);
     BOARD b = clone_board(board);
-    move_piece(&b, color == white ? 12 : 28, move, NULL);
+    move_piece(&b, color == white ? 12 : 28, move, NULL, &_);
     if (king_in_check(b, color))
         return false;
     square.file = c;
     move = create_move(square, false, false, false);
     b = clone_board(board);
-    move_piece(&b, color == white ? 12 : 28, move, NULL);
+    move_piece(&b, color == white ? 12 : 28, move, NULL, &_);
     return !king_in_check(b, color);
 }
 
@@ -353,6 +357,7 @@ bool castling_kingside(BOARD board, COLOR color) {
     if (board.movement_state[color == white ? 15 : 31] != has_not_moved)
         return false;
     SQUARE square;
+    PIECE _;
     square.file = g;
     square.rank = color == white ? 1 : 8;
     if (square_has_piece(board, square))
@@ -362,13 +367,13 @@ bool castling_kingside(BOARD board, COLOR color) {
         return false;
     MOVE move = create_move(square, false, false, false);
     BOARD b = clone_board(board);
-    move_piece(&b, color == white ? 12 : 28, move, NULL);
+    move_piece(&b, color == white ? 12 : 28, move, NULL, &_);
     if (king_in_check(b, color))
         return false;
     square.file = g;
     move = create_move(square, false, false, false);
     b = clone_board(board);
-    move_piece(&b, color == white ? 12 : 28, move, NULL);
+    move_piece(&b, color == white ? 12 : 28, move, NULL, &_);
     return !king_in_check(b, color);
 }
 

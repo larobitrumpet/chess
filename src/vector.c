@@ -100,19 +100,20 @@ void vector_iterate(VECTOR* vector, bool (*func)(void*, void*), void* params) {
     }
 }
 
-//bool vector_filter_func(void* data, void* params) {
-//    void** pars = (void**)params;
-//    bool (*filter_func)(void*, void*) = (bool (*)(void*, void*))pars[0];
-//    VECTOR* vector = (VECTOR*)pars[1];
-//    void* par = pars[2];
-//    if (filter_func(data, par)) {
-//        vector_enqueue(vector, data);
-//    }
-//    return false;
-//}
-//
-//VECTOR vector_filter(VECTOR* vector, bool (*filter_func)(void*, void*), void* params) {
-//    VECTOR new_vector = construct_vector(vector->bytewidth);
-//    void* pars[3] = {(void*)filter_func, (void*)&new_vector, params};
-//    vector_iterate(vector, vector_filter_func, (void*)pars);
-//}
+bool vector_filter_func(void* data, void* params) {
+    void** pars = (void**)params;
+    bool (*filter_func)(void*, void*) = (bool (*)(void*, void*))pars[0];
+    VECTOR* vector = (VECTOR*)pars[1];
+    void* par = pars[2];
+    if (filter_func(data, par)) {
+        vector_enqueue(vector, data);
+    }
+    return false;
+}
+
+VECTOR vector_filter(VECTOR* vector, bool (*filter_func)(void*, void*), void* params) {
+    VECTOR new_vector = construct_vector(vector->bytewidth);
+    void* pars[3] = {(void*)filter_func, (void*)&new_vector, params};
+    vector_iterate(vector, vector_filter_func, (void*)pars);
+    return new_vector;
+}
