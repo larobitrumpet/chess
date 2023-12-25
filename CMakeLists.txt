@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.28)
+
+project(chess)
+
+include_directories(include)
+link_directories(lib/${TARGET_BUILD_PLATFORM})
+add_executable(chess src/main.c src/render.c src/board.c src/move.c src/algebraic_notation.c src/vector.c)
+if(${TARGET_BUILD_PLATFORM} STREQUAL "Linux")
+    target_link_libraries(chess -lallegro_monolith-static -lm -lSM -lICE -lX11 -lXext -lXcursor -lXpm -lXi -lXinerama -lXrandr -lXss -lOpenGL -lGLU -lGLX -lpng -lz -lgtk-3 -lgdk-3 -lz -lpangocairo-1.0 -lpango-1.0 -lharfbuzz -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lgthread-2.0 -lglib-2.0)
+elseif(${TARGET_BUILD_PLATFORM} STREQUAL "Windows")
+    target_link_libraries(chess -lallegro_monolith-static -luser32 -lgdi32 -lcomdlg32 -lole32 -lwinmm -lkernel32 -lpsapi -lshlwapi -ld3d9 -ldinput8 -lstdc++ -lopengl32 -lglu32 -lgdiplus -luuid)
+else()
+    message(FATAL_ERROR "Please set TARGET_BUILD_PLATFORM (either `Linux` or `Windows`")
+endif()
+file(CREATE_LINK "${PROJECT_SOURCE_DIR}/chess.png" "${CMAKE_CURRENT_BINARY_DIR}/chess.png" SYMBOLIC)
+file(CREATE_LINK "${PROJECT_SOURCE_DIR}/LICENSE" "${CMAKE_CURRENT_BINARY_DIR}/LICENSE" SYMBOLIC)
