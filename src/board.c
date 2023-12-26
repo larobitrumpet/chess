@@ -46,6 +46,52 @@ char print_rank(unsigned char rank) {
     return ' ';
 }
 
+COL read_file(char file) {
+    switch (file) {
+        case 'a':
+            return a;
+        case 'b':
+            return b;
+        case 'c':
+            return c;
+        case 'd':
+            return d;
+        case 'e':
+            return e;
+        case 'f':
+            return f;
+        case 'g':
+            return g;
+        case 'h':
+            return h;
+        default:
+            return none;
+    }
+}
+
+unsigned char read_rank(char rank) {
+    switch (rank) {
+        case '1':
+            return 1;
+        case '2':
+            return 2;
+        case '3':
+            return 3;
+        case '4':
+            return 4;
+        case '5':
+            return 5;
+        case '6':
+            return 6;
+        case '7':
+            return 7;
+        case '8':
+            return 8;
+        default:
+            return 0;
+    }
+}
+
 SQUARE create_square(COL file, unsigned char rank) {
     SQUARE square;
     square.file = file;
@@ -106,12 +152,92 @@ BOARD clone_board(BOARD board) {
     return new_board;
 }
 
-int piece_to_board_index(COLOR color, bool pawn, COL starting_file) {
-    int index = starting_file;
-    if (!pawn)
-        index *= 2;
-    index *= color + 1;
-    return index;
+VECTOR piece_to_board_index(BOARD board, PIECE piece, COLOR color) {
+    VECTOR pieces = construct_vector(sizeof(int));
+    int i;
+    if (color == white) {
+        switch (piece) {
+            case pawn:
+                for (i = 0; i < 8; i++) {
+                    if (board.promotion[i] == pawn)
+                        vector_enqueue(&pieces, &i);
+                }
+                break;
+            case rook:
+                i = 8;
+                vector_enqueue(&pieces, &i);
+                i = 15;
+                vector_enqueue(&pieces, &i);
+                break;
+            case knight:
+                i = 9;
+                vector_enqueue(&pieces, &i);
+                i = 14;
+                vector_enqueue(&pieces, &i);
+                break;
+            case bishop:
+                i = 10;
+                vector_enqueue(&pieces, &i);
+                i = 13;
+                vector_enqueue(&pieces, &i);
+                break;
+            case queen:
+                i = 11;
+                vector_enqueue(&pieces, &i);
+                break;
+            case king:
+                i = 12;
+                vector_enqueue(&pieces, &i);
+                break;
+        }
+        if (piece != pawn) {
+            for (i = 0; i < 8; i++) {
+                if (board.promotion[i] == piece)
+                    vector_enqueue(&pieces, &i);
+            }
+        }
+    } else {
+        switch (piece) {
+            case pawn:
+                for (i = 16; i < 24; i++)
+                    if (board.promotion[i] == pawn)
+                        vector_enqueue(&pieces, &i);
+                break;
+            case rook:
+                i = 24;
+                vector_enqueue(&pieces, &i);
+                i = 31;
+                vector_enqueue(&pieces, &i);
+                break;
+            case knight:
+                i = 25;
+                vector_enqueue(&pieces, &i);
+                i = 30;
+                vector_enqueue(&pieces, &i);
+                break;
+            case bishop:
+                i = 26;
+                vector_enqueue(&pieces, &i);
+                i = 29;
+                vector_enqueue(&pieces, &i);
+                break;
+            case queen:
+                i = 27;
+                vector_enqueue(&pieces, &i);
+                break;
+            case king:
+                i = 28;
+                vector_enqueue(&pieces, &i);
+                break;
+        }
+        if (piece != pawn) {
+            for (i = 16; i < 24; i++) {
+                if (board.promotion[i] == piece)
+                    vector_enqueue(&pieces, &i);
+            }
+        }
+    }
+    return pieces;
 }
 
 void board_index_to_piece(BOARD board, int index, COLOR* color, PIECE* piece) {

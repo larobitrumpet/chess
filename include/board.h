@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include "vector.h"
 
 typedef enum COLOR {white, black} COLOR;
 typedef enum PIECE {pawn, rook, knight, bishop, queen, king} PIECE;
@@ -22,11 +23,13 @@ typedef struct BOARD {
 
 char print_file(COL file);
 char print_rank(unsigned char rank);
+COL read_file(char file);
+unsigned char read_rank(char rank);
 SQUARE create_square(COL file, unsigned char rank);
 bool squares_equal(SQUARE a, SQUARE b);
 BOARD create_board();
 BOARD clone_board(BOARD board);
-int piece_to_board_index(COLOR color, bool pawn, COL starting_file);
+VECTOR piece_to_board_index(BOARD board, PIECE piece, COLOR color);
 void board_index_to_piece(BOARD board, int index, COLOR* color, PIECE* piece);
 void square_to_pixel(SQUARE square, int tile_w, int tile_h, int* x, int* y);
 void square_to_piece(BOARD board, SQUARE square, bool* has_piece, COLOR* color, PIECE* piece);
