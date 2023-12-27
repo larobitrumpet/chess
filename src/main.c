@@ -117,18 +117,150 @@ void keyboard_update(ALLEGRO_EVENT* event) {
 int mouse_pos_x;
 int mouse_pos_y;
 
-void draw(BOARD board, VECTOR* poss_moves, VECTOR* castling_moves, COLOR turn, bool in_check[2], bool checkmate[2]) {
+typedef struct GAME_STATE {
+    BOARD board;
+    COLOR turn;
+    VECTOR poss_moves;
+    VECTOR castling_moves;
+    bool castling[2];
+    int selected_piece_index;
+    bool in_check[2];
+    bool checkmate[2];
+} GAME_STATE;
+
+GAME_STATE create_game_state() {
+    GAME_STATE game_state;
+    game_state.board = create_board();
+    game_state.turn = white;
+    game_state.poss_moves = construct_vector(sizeof(MOVE));
+    game_state.castling_moves = construct_vector(sizeof(CASTLING));
+    game_state.castling[queenside] = false;
+    game_state.castling[kingside] = false;
+    game_state.selected_piece_index = -1;
+    game_state.in_check[white] = false;
+    game_state.in_check[black] = false;
+    game_state.checkmate[white] = false;
+    game_state.checkmate[black] = false;
+    return game_state;
+}
+
+void destroy_game_state(GAME_STATE game_state) {
+    deconstruct_vector(game_state.poss_moves);
+    deconstruct_vector(game_state.castling_moves);
+}
+
+void draw(GAME_STATE game_state) {
     disp_pre_draw();
 
     // draw code
-    render(board, poss_moves, castling_moves, turn, in_check, checkmate);
+    render(game_state.board, &game_state.poss_moves, &game_state.castling_moves, game_state.turn, game_state.in_check, game_state.checkmate);
 
     disp_post_draw();
+}
+
+char* strtrim(char* str) {
+    size_t length = strlen(str);
+    char* new_str = (char*)malloc(sizeof(char) * (length + 1));
+    int j = 0;
+    for (int i = 0; i < length; i++) {
+        switch (str[i]) {
+            case '\t':
+            case '\n':
+            case '\v':
+            case '\f':
+            case '\r':
+            case ' ':
+                break;
+            default:
+                new_str[j] = str[i];
+                j++;
+                break;
+        }
+    }
+    new_str[j] = '\0';
+    return new_str;
+}
+
+#define INPUT_ALGEBRAIC_NOTATION_EVENT_TYPE ALLEGRO_GET_EVENT_TYPE('a', 'l', 'g', 'e')
+
+void* input_algerbraic_notation_thread_func(ALLEGRO_THREAD* thread, void* arg) {
+    ALLEGRO_EVENT_SOURCE* input_algebraic_notation_source = (ALLEGRO_EVENT_SOURCE*)arg;
+    ALLEGRO_EVENT input_algebraic_notation_event;
+    char* line = NULL;
+    size_t size;
+    while (getline(&line, &size, stdin) != -1) {
+        if (al_get_thread_should_stop(thread))
+            return NULL;
+        char* notation = strtrim(line);
+        input_algebraic_notation_event.user.type = INPUT_ALGEBRAIC_NOTATION_EVENT_TYPE;
+        input_algebraic_notation_event.user.data1 = (intptr_t)notation;
+        al_emit_user_event(input_algebraic_notation_source, &input_algebraic_notation_event, NULL);
+    }
+    return NULL;
+}
+
+void make_move(GAME_STATE* game_state, MOVE move, bool *take_mouse_input) {
+    BOARD b = clone_board(game_state->board);
+    PIECE promoted_to;
+    move_piece(&game_state->board, game_state->selected_piece_index, move, disp, &promoted_to);
+    char* notation = move_to_algebraic_notation(b, game_state->selected_piece_index, move, promoted_to);
+    printf("%s", notation);
+    free(notation);
+    if (game_state->turn == white) {
+        printf(" ");
+        fflush(stdout);
+    } else {
+        printf("\n");
+    }
+    game_state->in_check[game_state->turn] = king_in_check(game_state->board, game_state->turn);
+    game_state->checkmate[game_state->turn] = game_state->in_check[game_state->turn] && !can_move(game_state->board, game_state->turn);
+    game_state->turn = game_state->turn == white ? black : white;
+    game_state->in_check[game_state->turn] = king_in_check(game_state->board, game_state->turn);
+    bool cm = can_move(game_state->board, game_state->turn);
+    game_state->checkmate[game_state->turn] = game_state->in_check[game_state->turn] && !cm;
+    bool stalemate = !game_state->in_check[game_state->turn] && !cm;
+    *take_mouse_input = !(game_state->checkmate[white] || game_state->checkmate[black] || stalemate);
+    if (game_state->checkmate[white]) {
+        printf("0-1\n");
+    }
+    if (game_state->checkmate[black]) {
+        printf("\n1-0\n");
+    }
+    if (stalemate) {
+        if (game_state->turn == black)
+            printf("\n");
+        printf("½-½\n");
+    }
+    deconstruct_vector(game_state->poss_moves);
+    deconstruct_vector(game_state->castling_moves);
+    game_state->castling[queenside] = false;
+    game_state->castling[kingside] = false;
+    game_state->poss_moves = construct_vector(sizeof(MOVE));
+    game_state->castling_moves = construct_vector(sizeof(CASTLING));
+}
+
+void make_castling_move(GAME_STATE* game_state, CASTLING_SIDE side) {
+    castle(&game_state->board, game_state->turn, side);
+    printf("%s", castling_to_algebraic_notation(side));
+    if (game_state->turn == white) {
+        printf(" ");
+        fflush(stdout);
+    } else {
+        printf("\n");
+    }
+    game_state->turn = game_state->turn == white ? black : white;
+    deconstruct_vector(game_state->poss_moves);
+    deconstruct_vector(game_state->castling_moves);
+    game_state->castling[queenside] = false;
+    game_state->castling[kingside] = false;
+    game_state->poss_moves = construct_vector(sizeof(MOVE));
+    game_state->castling_moves = construct_vector(sizeof(CASTLING));
 }
 
 int main() {
     ALLEGRO_TIMER *timer;
     ALLEGRO_EVENT_QUEUE *queue;
+    ALLEGRO_EVENT_SOURCE input_algebraic_notation_source;
 
     int redraw = true;
     must_init(al_init(), "Allegro");
@@ -136,6 +268,7 @@ int main() {
     must_init(al_install_keyboard(), "keyboard");
     must_init(al_install_mouse(), "mouse");
     must_init(al_init_native_dialog_addon(), "native dialog addon");
+    al_init_user_event_source(&input_algebraic_notation_source);
 
     // init
     al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
@@ -159,18 +292,15 @@ int main() {
     al_register_event_source(queue, al_get_mouse_event_source());
     al_register_event_source(queue, al_get_display_event_source(disp));
     al_register_event_source(queue, al_get_timer_event_source(timer));
+    al_register_event_source(queue, &input_algebraic_notation_source);
 
     // setup_scene();
     bool take_mouse_input = true;
-    BOARD board = create_board();
     sprites_init();
-    COLOR turn = white;
-    VECTOR poss_moves = construct_vector(sizeof(MOVE));
-    VECTOR castling_moves = construct_vector(sizeof(CASTLING));
-    bool castling[2];
-    int selected_piece_index = -1;
-    bool in_check[2] = {false, false};
-    bool checkmate[2] = {false, false};
+    GAME_STATE game_state = create_game_state();
+
+    ALLEGRO_THREAD* input_algebraic_notation_thread = al_create_thread(input_algerbraic_notation_thread_func, &input_algebraic_notation_source);
+    al_start_thread(input_algebraic_notation_thread);
 
     bool done = false;
     al_start_timer(timer);
@@ -205,116 +335,57 @@ int main() {
                     SQUARE square;
                     square.file = (mouse_pos_x - DISP_W_OFFSET) / (DISP_W / 8) + 1;
                     square.rank = 9 - ((mouse_pos_y - DISP_H_OFFSET) / (DISP_H / 8));
-                    int move_index = vector_index(&poss_moves, &square, square_is_move);
+                    int move_index = vector_index(&game_state.poss_moves, &square, square_is_move);
                     if (move_index != -1) {
                         MOVE move;
-                        vector_get(&poss_moves, move_index, &move);
-                        BOARD b = clone_board(board);
-                        PIECE promoted_to;
-                        move_piece(&board, selected_piece_index, move, disp, &promoted_to);
-                        char* notation = move_to_algebraic_notation(b, selected_piece_index, move, promoted_to);
-                        printf("%s", notation);
-                        free(notation);
-                        if (turn == white) {
-                            printf(" ");
-                            fflush(stdout);
-                        } else {
-                            printf("\n");
-                        }
-                        in_check[turn] = king_in_check(board, turn);
-                        checkmate[turn] = in_check[turn] && !can_move(board, turn);
-                        turn = turn == white ? black : white;
-                        in_check[turn] = king_in_check(board, turn);
-                        bool cm = can_move(board, turn);
-                        checkmate[turn] = in_check[turn] && !cm;
-                        bool stalemate = !in_check[turn] && !cm;
-                        take_mouse_input = !(checkmate[white] || checkmate[black] || stalemate);
-                        if (checkmate[white]) {
-                            printf("0-1\n");
-                        }
-                        if (checkmate[black]) {
-                            printf("\n1-0\n");
-                        }
-                        if (stalemate) {
-                            if (turn == black)
-                                printf("\n");
-                            printf("½-½\n");
-                        }
-                        deconstruct_vector(poss_moves);
-                        deconstruct_vector(castling_moves);
-                        castling[queenside] = false;
-                        castling[kingside] = false;
-                        poss_moves = construct_vector(sizeof(MOVE));
-                        castling_moves = construct_vector(sizeof(CASTLING));
-                    } else if (castling[queenside] && square.file == a && square.rank == (turn == white ? 1 : 8)) {
-                        castle(&board, turn, queenside);
-                        printf("%s", castling_to_algebraic_notation(queenside));
-                        if (turn == white) {
-                            printf(" ");
-                            fflush(stdout);
-                        } else {
-                            printf("\n");
-                        }
-                        turn = turn == white ? black : white;
-                        deconstruct_vector(poss_moves);
-                        deconstruct_vector(castling_moves);
-                        castling[queenside] = false;
-                        castling[kingside] = false;
-                        poss_moves = construct_vector(sizeof(MOVE));
-                        castling_moves = construct_vector(sizeof(CASTLING));
-                    } else if (castling[kingside] && square.file == h && square.rank == (turn == white ? 1 : 8)) {
-                        castle(&board, turn, kingside);
-                        printf("%s", castling_to_algebraic_notation(kingside));
-                        if (turn == white) {
-                            printf(" ");
-                            fflush(stdout);
-                        } else {
-                            printf("\n");
-                        }
-                        turn = turn == white ? black : white;
-                        deconstruct_vector(poss_moves);
-                        deconstruct_vector(castling_moves);
-                        castling[queenside] = false;
-                        castling[kingside] = false;
-                        poss_moves = construct_vector(sizeof(MOVE));
-                        castling_moves = construct_vector(sizeof(CASTLING));
+                        vector_get(&game_state.poss_moves, move_index, &move);
+                        make_move(&game_state, move, &take_mouse_input);
+                    } else if (game_state.castling[queenside] && square.file == a && square.rank == (game_state.turn == white ? 1 : 8)) {
+                        make_castling_move(&game_state, queenside);
+                    } else if (game_state.castling[kingside] && square.file == h && square.rank == (game_state.turn == white ? 1 : 8)) {
+                        make_castling_move(&game_state, kingside);
                     } else {
-                        deconstruct_vector(poss_moves);
-                        deconstruct_vector(castling_moves);
-                        castling[queenside] = false;
-                        castling[kingside] = false;
-                        poss_moves = construct_vector(sizeof(MOVE));
-                        castling_moves = construct_vector(sizeof(CASTLING));
-                        int tmp_selected_piece_index = square_to_board_index(board, square);
+                        deconstruct_vector(game_state.poss_moves);
+                        deconstruct_vector(game_state.castling_moves);
+                        game_state.castling[queenside] = false;
+                        game_state.castling[kingside] = false;
+                        game_state.poss_moves = construct_vector(sizeof(MOVE));
+                        game_state.castling_moves = construct_vector(sizeof(CASTLING));
+                        int tmp_selected_piece_index = square_to_board_index(game_state.board, square);
                         if (tmp_selected_piece_index != -1) {
                             COLOR color;
                             PIECE piece;
-                            board_index_to_piece(board, tmp_selected_piece_index, &color, &piece);
-                            if (color == turn) {
-                                selected_piece_index = tmp_selected_piece_index;
-                                possible_moves(board, selected_piece_index, true, &poss_moves);
+                            board_index_to_piece(game_state.board, tmp_selected_piece_index, &color, &piece);
+                            if (color == game_state.turn) {
+                                game_state.selected_piece_index = tmp_selected_piece_index;
+                                possible_moves(game_state.board, game_state.selected_piece_index, true, &game_state.poss_moves);
                                 if (piece == king) {
-                                    castling_possible_moves(board, color, castling);
-                                    if (castling[queenside]) {
+                                    castling_possible_moves(game_state.board, color, game_state.castling);
+                                    if (game_state.castling[queenside]) {
                                         CASTLING c;
                                         c.side = queenside;
                                         c.color = color;
-                                        vector_enqueue(&castling_moves, &c);
+                                        vector_enqueue(&game_state.castling_moves, &c);
                                     }
-                                    if (castling[kingside]) {
+                                    if (game_state.castling[kingside]) {
                                         CASTLING c;
                                         c.side = kingside;
                                         c.color = color;
-                                        vector_enqueue(&castling_moves, &c);
+                                        vector_enqueue(&game_state.castling_moves, &c);
                                     }
                                 }
                             }
                         } else {
-                            selected_piece_index = tmp_selected_piece_index;
+                            game_state.selected_piece_index = tmp_selected_piece_index;
                         }
                     }
                     redraw = true;
                 }
+                break;
+            case INPUT_ALGEBRAIC_NOTATION_EVENT_TYPE:
+                char* notation = (char*)event.user.data1;
+                printf("Got notation: %s\n", notation);
+                free(notation);
                 break;
         }
 
@@ -325,17 +396,19 @@ int main() {
 
         if (redraw && al_is_event_queue_empty(queue)) {
             // redraw code
-            draw(board, &poss_moves, &castling_moves, turn, in_check, checkmate);
+            draw(game_state);
             redraw = false;
         }
     }
 
     // deinit
-    deconstruct_vector(poss_moves);
-    deconstruct_vector(castling_moves);
+    al_set_thread_should_stop(input_algebraic_notation_thread);
     disp_deinit();
+    destroy_game_state(game_state);
+    al_destroy_user_event_source(&input_algebraic_notation_source);
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
+    al_destroy_thread(input_algebraic_notation_thread);
 
     return 0;
 }
