@@ -190,12 +190,13 @@ void* input_algerbraic_notation_thread_func(ALLEGRO_THREAD* thread, void* arg) {
     size_t size;
     while (getline(&line, &size, stdin) != -1) {
         if (al_get_thread_should_stop(thread))
-            return NULL;
+            break;
         char* notation = strtrim(line);
         input_algebraic_notation_event.user.type = INPUT_ALGEBRAIC_NOTATION_EVENT_TYPE;
         input_algebraic_notation_event.user.data1 = (intptr_t)notation;
         al_emit_user_event(input_algebraic_notation_source, &input_algebraic_notation_event, NULL);
     }
+    free(line);
     return NULL;
 }
 

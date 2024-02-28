@@ -4,6 +4,7 @@ project(chess)
 
 include_directories(include)
 link_directories(lib/${TARGET_BUILD_PLATFORM})
+add_compile_options(-O0)
 add_executable(chess src/main.c src/render.c src/board.c src/move.c src/algebraic_notation.c src/vector.c)
 if(${TARGET_BUILD_PLATFORM} STREQUAL "Linux")
     target_link_libraries(chess -lallegro_monolith-static -lm -lSM -lICE -lX11 -lXext -lXcursor -lXpm -lXi -lXinerama -lXrandr -lXss -lOpenGL -lGLU -lGLX -lpng -lz -lgtk-3 -lgdk-3 -lz -lpangocairo-1.0 -lpango-1.0 -lharfbuzz -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lgthread-2.0 -lglib-2.0)

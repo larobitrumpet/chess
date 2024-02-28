@@ -115,6 +115,7 @@ char* move_to_algebraic_notation(BOARD board, int index, MOVE move, PIECE promot
             deconstruct_vector(same_move_and_file);
         }
         deconstruct_vector(same_move);
+        deconstruct_vector(same_pieces);
     }
     if (move.capture) {
         notation[i] = 'x';
