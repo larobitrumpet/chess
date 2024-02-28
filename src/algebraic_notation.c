@@ -176,6 +176,7 @@ char* castling_to_algebraic_notation(CASTLING_SIDE side) {
 }
 
 void algebraic_notation_to_move(BOARD board, char* notation, COLOR color, int* index, MOVE* move, bool* castling, CASTLING_SIDE* side, PIECE* promote_to, bool* error, char** error_message) {
+    *castling = false;
     move->capture = false;
     move->check = false;
     move->en_passant = false;

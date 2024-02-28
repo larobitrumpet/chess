@@ -384,8 +384,24 @@ int main() {
                 break;
             case INPUT_ALGEBRAIC_NOTATION_EVENT_TYPE:
                 char* notation = (char*)event.user.data1;
-                printf("Got notation: %s\n", notation);
+                MOVE move;
+                bool castling;
+                CASTLING_SIDE side;
+                PIECE promote_to;
+                bool error;
+                char* error_message;
+                algebraic_notation_to_move(game_state.board, notation, game_state.turn, &game_state.selected_piece_index, &move, &castling, &side, &promote_to, &error, &error_message);
                 free(notation);
+                if (error) {
+                    printf("%s\n", error_message);
+                } else {
+                    if (castling) {
+                        make_castling_move(&game_state, side);
+                    } else {
+                        make_move(&game_state, move, &take_mouse_input);
+                    }
+                }
+                redraw = true;
                 break;
         }
 
