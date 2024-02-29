@@ -176,8 +176,8 @@ char* castling_to_algebraic_notation(CASTLING_SIDE side) {
     return side == queenside ? "0-0-0    " : "0-0      ";
 }
 
-void algebraic_notation_to_move(BOARD board, char* notation, COLOR color, int* index, MOVE* move, bool* castling, CASTLING_SIDE* side, PIECE* promote_to, bool* error, char** error_message) {
-    *castling = false;
+void algebraic_notation_to_move(BOARD board, char* notation, COLOR color, int* index, MOVE* move, bool* castle, CASTLING_SIDE* side, PIECE* promote_to, bool* error, char** error_message) {
+    *castle = false;
     move->capture = false;
     move->check = false;
     move->en_passant = false;
@@ -186,7 +186,7 @@ void algebraic_notation_to_move(BOARD board, char* notation, COLOR color, int* i
         bool castling[2];
         castling_possible_moves(board, color, castling);
         if (castling[queenside]) {
-            *castling = true;
+            *castle = true;
             *side = queenside;
             return;
         } else {
@@ -198,16 +198,16 @@ void algebraic_notation_to_move(BOARD board, char* notation, COLOR color, int* i
         bool castling[2];
         castling_possible_moves(board, color, castling);
         if (castling[kingside]) {
-            *castling = true;
+            *castle = true;
             *side = kingside;
             return;
         } else {
             *error = true;
-            *error_message = "Can't castle queenside";
+            *error_message = "Can't castle kingside";
             return;
         }
     } else {
-        *castling = false;
+        *castle = false;
     }
     int i = 0;
     PIECE piece;

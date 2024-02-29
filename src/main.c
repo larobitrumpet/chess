@@ -386,17 +386,17 @@ int main() {
             case INPUT_ALGEBRAIC_NOTATION_EVENT_TYPE:
                 char* notation = (char*)event.user.data1;
                 MOVE move;
-                bool castling;
+                bool castle;
                 CASTLING_SIDE side;
                 PIECE promote_to;
                 bool error;
                 char* error_message;
-                algebraic_notation_to_move(game_state.board, notation, game_state.turn, &game_state.selected_piece_index, &move, &castling, &side, &promote_to, &error, &error_message);
+                algebraic_notation_to_move(game_state.board, notation, game_state.turn, &game_state.selected_piece_index, &move, &castle, &side, &promote_to, &error, &error_message);
                 free(notation);
                 if (error) {
                     printf("%s\n", error_message);
                 } else {
-                    if (castling) {
+                    if (castle) {
                         make_castling_move(&game_state, side);
                     } else {
                         make_move(&game_state, move, &take_mouse_input);
