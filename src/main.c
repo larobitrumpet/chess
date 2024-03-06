@@ -1,5 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef LINUX
+#include <sys/select.h>
+#endif
+#ifdef WINDOWS
+#include <winsock2.h>
+#endif
 #include "allegro5/allegro5.h"
 #include "allegro5/allegro_image.h"
 #include "allegro5/allegro_native_dialog.h"
@@ -8,6 +14,35 @@
 #include "move.h"
 #include "algebraic_notation.h"
 #include "vector.h"
+
+#define GET_LINE_BUFFER_SIZE 16
+
+size_t get_line(char** restrict lineptr, size_t* restrict n, FILE* restrict stream) {
+    if (*lineptr == NULL) {
+        *n = sizeof(char) * GET_LINE_BUFFER_SIZE;
+        *lineptr = malloc(*n);
+        if (*lineptr == NULL)
+            return -1;
+    }
+    size_t chars_read = 0;
+    while (true) {
+        size_t chars_to_read = chars_read + GET_LINE_BUFFER_SIZE;
+        if (*n < chars_to_read) {
+            *n = chars_to_read;
+            *lineptr = realloc(*lineptr, *n);
+            if (*lineptr == NULL)
+                return -1;
+        }
+        if (fgets(*lineptr + chars_read, GET_LINE_BUFFER_SIZE, stream) == NULL)
+            return -1;
+        size_t i = chars_read;
+        while (i < chars_to_read && (*lineptr)[i] != '\0')
+            i++;
+        if ((*lineptr)[i] == '\0') {
+            return i;
+        }
+    }
+}
 
 void must_init(bool test, const char *description) {
     if (test) return;
@@ -188,15 +223,27 @@ void* input_algerbraic_notation_thread_func(ALLEGRO_THREAD* thread, void* arg) {
     ALLEGRO_EVENT input_algebraic_notation_event;
     char* line = NULL;
     size_t size;
-    while (getline(&line, &size, stdin) != -1) {
-        if (al_get_thread_should_stop(thread))
-            break;
+    while (!al_get_thread_should_stop(thread)) {
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(STDIN_FILENO, &fds);
+        struct timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 500;
+        select(STDIN_FILENO + 1, &fds, NULL, NULL, &timeout);
+        if (!(FD_ISSET(STDIN_FILENO, &fds)))
+            continue;
+        if (get_line(&line, &size, stdin) == -1) {
+            free(line);
+            return NULL;
+        }
         char* notation = strtrim(line);
         input_algebraic_notation_event.user.type = INPUT_ALGEBRAIC_NOTATION_EVENT_TYPE;
         input_algebraic_notation_event.user.data1 = (intptr_t)notation;
         al_emit_user_event(input_algebraic_notation_source, &input_algebraic_notation_event, NULL);
     }
-    free(line);
+    if (line != NULL)
+        free(line);
     return NULL;
 }
 
