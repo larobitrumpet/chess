@@ -155,6 +155,7 @@ int mouse_pos_y;
 typedef struct GAME_STATE {
     BOARD board;
     COLOR turn;
+    int turn_number;
     VECTOR poss_moves;
     VECTOR castling_moves;
     bool castling[2];
@@ -167,6 +168,7 @@ GAME_STATE create_game_state() {
     GAME_STATE game_state;
     game_state.board = create_board();
     game_state.turn = white;
+    game_state.turn_number = 1;
     game_state.poss_moves = construct_vector(sizeof(MOVE));
     game_state.castling_moves = construct_vector(sizeof(CASTLING));
     game_state.castling[queenside] = false;
@@ -252,6 +254,8 @@ void make_move(GAME_STATE* game_state, MOVE move, bool *take_mouse_input) {
     PIECE promoted_to;
     move_piece(&game_state->board, game_state->selected_piece_index, move, disp, &promoted_to);
     char* notation = move_to_algebraic_notation(b, game_state->selected_piece_index, move, promoted_to);
+    if (game_state->turn == white)
+        printf("%d. ", game_state->turn_number);
     printf("%s", notation);
     free(notation);
     if (game_state->turn == white) {
@@ -263,6 +267,8 @@ void make_move(GAME_STATE* game_state, MOVE move, bool *take_mouse_input) {
     game_state->in_check[game_state->turn] = king_in_check(game_state->board, game_state->turn);
     game_state->checkmate[game_state->turn] = game_state->in_check[game_state->turn] && !can_move(game_state->board, game_state->turn);
     game_state->turn = game_state->turn == white ? black : white;
+    if (game_state->turn == white)
+        game_state->turn_number++;
     game_state->in_check[game_state->turn] = king_in_check(game_state->board, game_state->turn);
     bool cm = can_move(game_state->board, game_state->turn);
     game_state->checkmate[game_state->turn] = game_state->in_check[game_state->turn] && !cm;
@@ -289,6 +295,8 @@ void make_move(GAME_STATE* game_state, MOVE move, bool *take_mouse_input) {
 
 void make_castling_move(GAME_STATE* game_state, CASTLING_SIDE side) {
     castle(&game_state->board, game_state->turn, side);
+    if (game_state->turn == white)
+        printf("%d. ", game_state->turn_number);
     printf("%s", castling_to_algebraic_notation(side));
     if (game_state->turn == white) {
         printf(" ");
@@ -297,6 +305,8 @@ void make_castling_move(GAME_STATE* game_state, CASTLING_SIDE side) {
         printf("\n");
     }
     game_state->turn = game_state->turn == white ? black : white;
+    if (game_state->turn == white)
+        game_state->turn_number++;
     deconstruct_vector(game_state->poss_moves);
     deconstruct_vector(game_state->castling_moves);
     game_state->castling[queenside] = false;
