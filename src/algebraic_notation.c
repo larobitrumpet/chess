@@ -127,6 +127,7 @@ char* move_to_algebraic_notation(BOARD board, int index, MOVE move, PIECE promot
     i++;
     if (promote_to != pawn) {
         notation[i] = '=';
+        i++;
         switch (promote_to) {
             case rook:
                 notation[i] = 'R';
